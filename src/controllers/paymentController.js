@@ -84,6 +84,9 @@ const addPaymentSchedule = async (req, res) => {
   
     try {
         const paymentSchedule = await paymentScheduleModel.addPaymentSchedule(userId, totalInstallments, startDate);
+
+        await paymentScheduleModel.updateUserSubscriptionToActive(userId);
+        
         res.status(201).json(paymentSchedule);
     } catch (error) {
         console.error('Error adding payment schedule:', error);
@@ -104,8 +107,32 @@ const addPayment = async (req, res) => {
     }
 };
 
+const getAllUserPaymentSchedule = async (req, res) => {
+  try {
+    const schedules = await paymentScheduleModel.getAllUserPaymentSchedules();
+
+    const formattedSchedules = schedules.map(schedule => ({
+      userId: schedule.user_id,
+      username: schedule.username,
+      totalInstallments: schedule.total_installments,
+      startDate: new Date(schedule.start_date).toDateString(),
+      payments: schedule.payments.map(payment => ({
+        paymentDate: new Date(payment.payment_date).toDateString(),
+        amount: payment.amount
+      }))
+    }));
+
+    res.json(formattedSchedules);
+  } catch (error) {
+    console.error('Error retrieving all user payment schedules:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
 module.exports = {
     getPaymentSchedule,
     addPaymentSchedule,
     addPayment,
+    getAllUserPaymentSchedule,
 };

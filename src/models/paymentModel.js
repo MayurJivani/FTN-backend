@@ -33,8 +33,34 @@ const addPayment = async (userId, amount, paymentDate) => {
     const { rows } = await pool.query(query, values);
     return rows[0];
 };
+
+const getAllUserPaymentSchedules = async () => {
+  try {
+    const scheduleQuery = `
+      SELECT ps.user_id, u.username, ps.total_installments, ps.start_date, 
+             json_agg(json_build_object('payment_date', p.payment_date, 'amount', p.amount)) AS payments
+      FROM payment_schedule ps
+      JOIN users u ON ps.user_id = u.user_id
+      LEFT JOIN payments p ON ps.user_id = p.user_id
+      GROUP BY ps.user_id, u.username, ps.total_installments, ps.start_date
+      ORDER BY ps.user_id;
+    `;
+    const { rows } = await pool.query(scheduleQuery);
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateUserSubscriptionToActive = async (userId) => {
+  const query = 'UPDATE users SET subscription = $1 WHERE user_id = $2';
+  const values = ['active', userId];
+  await pool.query(query, values);
+};
   
 module.exports = {
+    getAllUserPaymentSchedules,
+    updateUserSubscriptionToActive,
     getPaymentScheduleByUserId,
     getPaymentsByUserId,
     addPaymentSchedule,

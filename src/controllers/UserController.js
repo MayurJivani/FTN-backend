@@ -58,6 +58,10 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    if (user.rows[0].subscription !== 'active') {
+      return res.status(403).json({ message: 'Please purchase course to access' });
+    }
+
     //console.log(typeof appId);
 
     // const zegoToken = generateToken04(
@@ -72,9 +76,7 @@ const loginUser = async (req, res) => {
       email: user.rows[0].email,
       username: user.rows[0].username,
       //zegoToken: zegoToken,
-    };
-
-    
+    };    
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 

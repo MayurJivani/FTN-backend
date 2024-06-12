@@ -1,12 +1,14 @@
 const express = require('express');
 const usersRoutes = require('./src/routes/usersRoute');
 const zoomRoutes = require('./src/routes/zoomRoute');
+const zoomSdkRoutes = require('./src/routes/zoomSdkRoute');
 const paymentRoutes = require('./src/routes/paymentRoute');
 const recLectureRoutes = require('./src/routes/recLecturesRoute');
 const feedbackRoutes = require('./src/routes/feedbackRoute');
 const leaveRoutes = require('./src/routes/leaveRoute');
 const mentorRoutes = require('./src/routes/mentorRoute');
 const fileRoutes = require('./src/routes/filesRoute');
+const lecturesRoutes = require('./src/routes/lecturesRoute');
 const app = express();
 const cors = require('cors');
 const PORT = process.env.SERVER_PORT;
@@ -23,6 +25,8 @@ app.use(cors(corsOptions));
 
 app.use('/api/users', usersRoutes);
 app.use('/api/zoom', zoomRoutes);
+app.use('/api/meeting', zoomSdkRoutes);
+app.use('/api/lecture', lecturesRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/recording', recLectureRoutes)
 app.use('/api/feedback', feedbackRoutes)

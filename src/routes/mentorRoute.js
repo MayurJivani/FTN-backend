@@ -6,5 +6,6 @@ const fileUploadMiddleware = require('../middleware/fileUploadMiddleware');
 
 router.get('/list', auth, mentorController.getAllMentors);
 router.post('/add', fileUploadMiddleware,mentorController.addMentor);
+router.post('/login', mentorController.loginUser);
 
 module.exports = router;
