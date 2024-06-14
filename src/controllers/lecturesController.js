@@ -1,7 +1,7 @@
 const lecturesModel = require('../models/lecturesModel');
 
 const scheduleLecture = async (req, res) => {
-    const { title, description, datetime } = req.body;
+    const { title, description, datetime, batch_id } = req.body;
     const username = req.user.username;
 
     try {
@@ -11,7 +11,7 @@ const scheduleLecture = async (req, res) => {
 
         const { sessionName, sessionPass } = generateCredentials(title);
         const credentials = encodeCredentialsToBase64(sessionName, sessionPass);
-        const response = await lecturesModel.insertLecture(title, description, datetime, username, credentials);
+        const response = await lecturesModel.insertLecture(title, description, datetime, username, credentials, batch_id);
 
         res.status(201).json(response);
     } catch (error) {
@@ -48,8 +48,9 @@ const listLecturesFromToday = async (req, res) => {
 };
 
 const listLecturesForToday = async (req, res) => {
+    const batchId = req.user.batch_id;
     try {
-        const lectures = await lecturesModel.getLecturesForToday();
+        const lectures = await lecturesModel.getLecturesForToday(batchId);
         res.status(200).json(lectures);
     } catch (error) {
         console.error('Error fetching lectures for today:', error);

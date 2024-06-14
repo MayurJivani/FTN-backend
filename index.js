@@ -9,6 +9,7 @@ const leaveRoutes = require('./src/routes/leaveRoute');
 const mentorRoutes = require('./src/routes/mentorRoute');
 const fileRoutes = require('./src/routes/filesRoute');
 const lecturesRoutes = require('./src/routes/lecturesRoute');
+const batchRoutes = require('./src/routes/batchRoute');
 const app = express();
 const cors = require('cors');
 const PORT = process.env.SERVER_PORT;
@@ -33,5 +34,6 @@ app.use('/api/feedback', feedbackRoutes)
 app.use('/api/leave', leaveRoutes)
 app.use('/api/mentor', mentorRoutes)
 app.use('/api/files', fileRoutes)
+app.use('/api/batch', batchRoutes)
 
 app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

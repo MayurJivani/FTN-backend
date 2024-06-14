@@ -18,6 +18,19 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getInactiveUsers = async (req, res) => {
+  try {
+    if (req.user.role !== "mentor") {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const users = await pool.query('SELECT * FROM users WHERE subscription = $1', ['inactive']);
+    res.json(users.rows);
+  } catch (error) {
+    console.error('Error getting inactive users:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 const registerUser = async (req, res) => {
   const { username, email, password, phoneno } = req.body;
   try {
@@ -59,7 +72,7 @@ const loginUser = async (req, res) => {
     }
 
     if (user.rows[0].subscription !== 'active') {
-      return res.status(403).json({ message: 'Please purchase course to access' });
+      return res.status(403).json({ message: 'Please purchase course to access or Contact authorities' });
     }
 
     //console.log(typeof appId);
@@ -75,6 +88,7 @@ const loginUser = async (req, res) => {
       id: user.rows[0].user_id,
       email: user.rows[0].email,
       username: user.rows[0].username,
+      batch_id: user.rows[0].batch_id,
       //zegoToken: zegoToken,
     };    
 
@@ -178,10 +192,42 @@ const updateUser = async (req, res) => {
   }
 };
 
+const verifyUser = async (req, res) => {
+
+  if (req.user.role !== "mentor") {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const { userId, subscription, batchId } = req.body;
+
+  if (!userId || !subscription || batchId == null) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  try {
+    
+    const query = `
+      UPDATE users
+      SET subscription = $1, batch_id = $2
+      WHERE user_id = $3
+      RETURNING *;
+    `;
+    const values = [subscription, batchId, userId];
+    await pool.query(query, values);
+
+    res.status(200).json({ message: 'User activated successfully' });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 module.exports = {
   getAllUsers,
   registerUser,
   loginUser,
   getUserDetails,
   updateUser,
+  getInactiveUsers,
+  verifyUser,
 };

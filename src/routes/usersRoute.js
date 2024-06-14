@@ -9,5 +9,7 @@ router.post('/register', UserController.registerUser);
 router.post('/login', UserController.loginUser);
 router.get('/me', auth, UserController.getUserDetails);
 router.put('/update', auth, fileUploadMiddleware, UserController.updateUser);
+router.get('/list', auth, UserController.getInactiveUsers);
+router.put('/verify', auth, UserController.verifyUser);
 
 module.exports = router;
