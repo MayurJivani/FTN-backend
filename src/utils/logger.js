@@ -1,4 +1,3 @@
-// src/middleware/logger.js
 const morgan = require('morgan');
 const winston = require('winston');
 
@@ -27,7 +26,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Morgan middleware for logging HTTP requests
 const morganMiddleware = morgan('combined', {
     stream: {
-        write: (message) => logger.info(message.trim()), // Use 'silly' log level
+        write: (message) => logger.info(message.trim()), // Use 'info' log level for HTTP requests
     },
 });
 

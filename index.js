@@ -12,7 +12,7 @@ const lecturesRoutes = require('./src/routes/lecturesRoute');
 const batchRoutes = require('./src/routes/batchRoute');
 const app = express();
 const cors = require('cors');
-const { logger, morganMiddleware } = require('./src/middleware/logger');
+const { logger, morganMiddleware } = require('./src/utils/logger');
 const PORT = process.env.SERVER_PORT;
 
 const corsOptions = {
