@@ -33,6 +33,10 @@ const getInactiveUsers = async (req, res) => {
 
 const registerUser = async (req, res) => {
   const { username, email, password, phoneno } = req.body;
+  if (!username || !email || !password || !phoneno) {
+    return res.status(400).json({ message: 'Fields cannot be empty' });
+  }
+
   try {
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
@@ -222,6 +226,124 @@ const verifyUser = async (req, res) => {
   }
 };
 
+const bulkRegisterUsers = async (req, res) => {
+  const users = req.body.users;
+
+  if (!Array.isArray(users) || users.length === 0) {
+    return res.status(400).json({ message: 'Users data is required' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Get current year
+    const year = new Date().getFullYear().toString().slice(-2);
+
+    for (let i = 0; i < users.length; i++) {
+      const { username, email, phoneno, batch } = users[i];
+      const password = "FTN@50";
+
+      if (!username || !email || !phoneno || !batch) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'All fields are required for each user' });
+      }
+
+      const existingUser = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (existingUser.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: `User with email ${email} already exists` });
+      }
+
+      const idResult = await client.query('SELECT COUNT(*) FROM users');
+      const idCount = parseInt(idResult.rows[0].count) + 1;
+      const paddedId = idCount.toString().padStart(2, '0');
+      const userId = `${year}FTN${paddedId}`;
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await client.query(
+        'INSERT INTO users (user_id, username, email, password, phoneno, batch_id, subscription) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [userId, username, email, hashedPassword, phoneno, batch, 'active']
+      );
+
+      // await sendEmail(email, username);
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'All users registered successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in bulk registration:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  } finally {
+    client.release();
+  }
+};
+
+const bulkLoginUsers = async (req, res) => {
+  const users = req.body.users;
+
+  if (!Array.isArray(users) || users.length === 0) {
+    return res.status(400).json({ message: 'Users data is required' });
+  }
+
+  const results = [];
+
+  try {
+    for (let i = 0; i < users.length; i++) {
+      const { email, password } = users[i];
+
+      if (!email || !password) {
+        results.push({ email, message: 'Email and password are required', success: false });
+        continue;
+      }
+
+      const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (user.rows.length === 0) {
+        results.push({ email, message: 'Invalid credentials', success: false });
+        continue;
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.rows[0].password);
+      if (!isPasswordValid) {
+        results.push({ email, message: 'Invalid credentials', success: false });
+        continue;
+      }
+
+      if (user.rows[0].subscription !== 'active') {
+        results.push({ email, message: 'Please purchase course to access or Contact authorities', success: false });
+        continue;
+      }
+
+      const payload = {
+        id: user.rows[0].user_id,
+        email: user.rows[0].email,
+        username: user.rows[0].username,
+        batch_id: user.rows[0].batch_id,
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+      const profilePic = user.rows[0].profile_pic ? user.rows[0].profile_pic : null;
+
+      results.push({
+        email,
+        username: user.rows[0].username,
+        token,
+        profilePic,
+        success: true
+      });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error in bulk login:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 module.exports = {
   getAllUsers,
   registerUser,
@@ -230,4 +352,8 @@ module.exports = {
   updateUser,
   getInactiveUsers,
   verifyUser,
+  bulkRegisterUsers,
+  bulkLoginUsers // Add the bulkLoginUsers function here
 };
+
+

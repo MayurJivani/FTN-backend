@@ -18,7 +18,9 @@ const ZoomModel = {
   },
 
   async controlRecording(sessionId, token, method) {
-    const url = `https://api.zoom.us/v2/videosdk/sessions/${sessionId}/events`;
+    const encodedSessionId = encodeURIComponent(sessionId);
+    console.log(encodedSessionId)
+    const url = `https://api.zoom.us/v2/videosdk/sessions/${encodedSessionId}/events`;
     const headers = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
