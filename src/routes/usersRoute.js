@@ -12,6 +12,5 @@ router.put('/update', auth, fileUploadMiddleware, UserController.updateUser);
 router.get('/list', auth, UserController.getInactiveUsers);
 router.put('/verify', auth, UserController.verifyUser);
 router.post('/bulkRegister', UserController.bulkRegisterUsers); 
-router.post('/bulkLogin', UserController.bulkLoginUsers); 
 
 module.exports = router;

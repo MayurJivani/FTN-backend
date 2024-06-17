@@ -282,67 +282,6 @@ const bulkRegisterUsers = async (req, res) => {
   }
 };
 
-const bulkLoginUsers = async (req, res) => {
-  const users = req.body.users;
-
-  if (!Array.isArray(users) || users.length === 0) {
-    return res.status(400).json({ message: 'Users data is required' });
-  }
-
-  const results = [];
-
-  try {
-    for (let i = 0; i < users.length; i++) {
-      const { email, password } = users[i];
-
-      if (!email || !password) {
-        results.push({ email, message: 'Email and password are required', success: false });
-        continue;
-      }
-
-      const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-      if (user.rows.length === 0) {
-        results.push({ email, message: 'Invalid credentials', success: false });
-        continue;
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.rows[0].password);
-      if (!isPasswordValid) {
-        results.push({ email, message: 'Invalid credentials', success: false });
-        continue;
-      }
-
-      if (user.rows[0].subscription !== 'active') {
-        results.push({ email, message: 'Please purchase course to access or Contact authorities', success: false });
-        continue;
-      }
-
-      const payload = {
-        id: user.rows[0].user_id,
-        email: user.rows[0].email,
-        username: user.rows[0].username,
-        batch_id: user.rows[0].batch_id,
-      };
-
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-      const profilePic = user.rows[0].profile_pic ? user.rows[0].profile_pic : null;
-
-      results.push({
-        email,
-        username: user.rows[0].username,
-        token,
-        profilePic,
-        success: true
-      });
-    }
-
-    res.json(results);
-  } catch (error) {
-    console.error('Error in bulk login:', error);
-    res.status(500).json({ message: 'Server Error' });
-  }
-};
 
 module.exports = {
   getAllUsers,
@@ -353,7 +292,6 @@ module.exports = {
   getInactiveUsers,
   verifyUser,
   bulkRegisterUsers,
-  bulkLoginUsers // Add the bulkLoginUsers function here
 };
 
 
