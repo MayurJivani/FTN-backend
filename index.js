@@ -12,6 +12,7 @@ const lecturesRoutes = require('./src/routes/lecturesRoute');
 const batchRoutes = require('./src/routes/batchRoute');
 const app = express();
 const cors = require('cors');
+const { logger, morganMiddleware } = require('./src/middleware/logger');
 const PORT = process.env.SERVER_PORT;
 
 const corsOptions = {
@@ -23,6 +24,8 @@ const corsOptions = {
 app.use(express.json()); 
 
 app.use(cors(corsOptions));
+
+app.use(morganMiddleware);
 
 app.use('/api/users', usersRoutes);
 app.use('/api/zoom', zoomRoutes);
@@ -36,4 +39,9 @@ app.use('/api/mentor', mentorRoutes)
 app.use('/api/files', fileRoutes)
 app.use('/api/batch', batchRoutes)
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+app.use((err, req, res, next) => {
+    logger.error(err.stack);
+    res.status(500).send('Something went wrong!');
+});
+
+app.listen(PORT, '0.0.0.0', () => logger.info(`Server running on port ${PORT}`));
