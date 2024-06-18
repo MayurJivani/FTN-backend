@@ -12,6 +12,16 @@ const insertFeedback = async (user_id, response) => {
   return result.rows[0];
 };
 
+const listFeedback = async () => {
+  const query = `
+   SELECT * FROM feedback;
+  `;
+  const result = await pool.query(query);
+  return result.rows;
+};
+
+
 module.exports = {
   insertFeedback,
+  listFeedback,
 };

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { generateToken04 } = require('../models/zegoTokenGenerator'); 
 require('dotenv').config();
 const sendEmail = require('../utils/sendEmail');
+const { logger } = require('../utils/logger');
 
 const appId = parseInt(process.env.ZEGO_APP_ID, 10);
 const secret = process.env.ZEGO_WEB_SECRET;
@@ -65,6 +66,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
+    logger.info('User login', { Logging_User: req.body.email });
     const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (user.rows.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
