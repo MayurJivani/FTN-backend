@@ -1,24 +1,27 @@
 const leaveModel = require('../models/leaveModel');
 const { logger } = require('../utils/logger');
+const sendEmail = require('../utils/sendEmail');
 
 const applyLeave = async (req, res) => {
     const user_id = req.user.id;
     const username = req.user.username;
     const batch_id = req.user.batch_id;
-    const { leaveType, approver, startDate, endDate, reason } = req.body;
+    const email = req.user.email; 
+    const { leaveType, approver, startDate, endDate, reason} = req.body;
 
-    if (!user_id || !username || !leaveType || !approver || !startDate || !endDate || !reason || !batch_id) {
+    if (!user_id || !username || !leaveType || !approver || !startDate || !endDate || !reason || !batch_id || !email) {
         return res.status(400).json({ message: 'All fields are required' });
     }
 
     try {
-        const leaveApplication = await leaveModel.insertLeaveApplication(user_id, username, leaveType, approver, startDate, endDate, reason, batch_id);
+        const leaveApplication = await leaveModel.insertLeaveApplication(user_id, username, leaveType, approver, startDate, endDate, reason, batch_id, email);
         res.status(201).json(leaveApplication);
     } catch (error) {
         logger.error('Error applying leave:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
 
 
 const listLeavesByBatch = async (req, res) => {
@@ -57,8 +60,20 @@ const approveOrDenyLeave = async (req, res) => {
 
     try {
         const leaveApplication = await leaveModel.updateLeaveStatus(user_id, status);
-        res.status(200).json(leaveApplication);
-    } catch (error) {
+
+        const { username, leave_type, start_date, end_date, reason, email } = leaveApplication;
+        
+        const emailSubject = `Leave Application ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+        const emailBody = `
+            <p>Hello ${username},</p>
+            <p>Your leave application for ${leave_type} from ${new Date(start_date).toLocaleDateString()} to ${new Date(end_date).toLocaleDateString()} has been ${status}.</p>
+            <p>Reason: ${reason}</p>
+        `;
+
+        await sendEmail(email, username, emailSubject, emailBody);
+
+        res.status(200).json({ message: "Leave updated successfully" });
+    } catch (error) {   
         console.error('Error updating leave status:', error);
         res.status(500).json({ message: 'Internal server error' });
     }

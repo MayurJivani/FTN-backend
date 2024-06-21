@@ -54,7 +54,9 @@ const registerUser = async (req, res) => {
 
     await pool.query('INSERT INTO users (user_id, username, email, password, phoneno) VALUES ($1, $2, $3, $4, $5)', [userId, username, email, hashedPassword, phoneno]);
     
-    await sendEmail(email, username);
+    const emailSubject = 'Successful Registration';
+    const emailBody = '<p>Hello {username},</p><p>You have successfully registered in Fly the Nest.</p>';
+    await sendEmail(email, username, emailSubject, emailBody);
 
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
