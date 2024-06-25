@@ -14,10 +14,19 @@ const insertFeedback = async (user_id, response) => {
 
 const listFeedback = async () => {
   const query = `
-   SELECT * FROM feedback;
+    SELECT f.responses, u.username, u.batch_id, u.profile_pic 
+    FROM feedback f
+    JOIN users u ON f.user_id = u.user_id;
   `;
   const result = await pool.query(query);
-  return result.rows;
+  return result.rows.map(row => ({
+    user: {
+      username: row.username,
+      batch_id: row.batch_id,
+      profile_pic: row.profile_pic,
+    },
+    responses: row.responses
+  }));
 };
 
 

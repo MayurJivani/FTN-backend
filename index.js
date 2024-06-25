@@ -1,43 +1,26 @@
 const express = require('express');
-const usersRoutes = require('./src/routes/usersRoute');
-const zoomRoutes = require('./src/routes/zoomRoute');
-const zoomSdkRoutes = require('./src/routes/zoomSdkRoute');
-const paymentRoutes = require('./src/routes/paymentRoute');
-const recLectureRoutes = require('./src/routes/recLecturesRoute');
-const feedbackRoutes = require('./src/routes/feedbackRoute');
-const leaveRoutes = require('./src/routes/leaveRoute');
-const mentorRoutes = require('./src/routes/mentorRoute');
-const fileRoutes = require('./src/routes/filesRoute');
-const lecturesRoutes = require('./src/routes/lecturesRoute');
-const batchRoutes = require('./src/routes/batchRoute');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const routes = require('./src/routes');
 const app = express();
-const cors = require('cors');
+const cors = require('./src/middleware/cors');
 const { logger, morganMiddleware } = require('./src/utils/logger');
-const PORT = process.env.SERVER_PORT;
+const { PORT } = require('./src/config/config');
 
-const corsOptions = {
-    origin: '*',
-    methods: ['POST', 'GET', 'PUT'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'ngrok-skip-browser-warning'],
-};
-
-app.use(express.json()); 
-
-app.use(cors(corsOptions));
-
+app.use(express.json());
+app.use(compression());
+app.use(helmet());
+app.use(cors);
 app.use(morganMiddleware);
 
-app.use('/api/users', usersRoutes);
-app.use('/api/zoom', zoomRoutes);
-app.use('/api/meeting', zoomSdkRoutes);
-app.use('/api/lecture', lecturesRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/recording', recLectureRoutes)
-app.use('/api/feedback', feedbackRoutes)
-app.use('/api/leave', leaveRoutes)
-app.use('/api/mentor', mentorRoutes)
-app.use('/api/files', fileRoutes)
-app.use('/api/batch', batchRoutes)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+});
+app.use(limiter);
+
+app.use('/api', routes);
 
 app.use((err, req, res, next) => {
     logger.error(err.stack);
