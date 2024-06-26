@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { generateToken04 } = require('../models/zegoTokenGenerator'); 
 require('dotenv').config();
 const sendEmail = require('../utils/sendEmail');
+const { logger } = require('../utils/logger');
 
 const appId = parseInt(process.env.ZEGO_APP_ID, 10);
 const secret = process.env.ZEGO_WEB_SECRET;
@@ -33,6 +34,10 @@ const getInactiveUsers = async (req, res) => {
 
 const registerUser = async (req, res) => {
   const { username, email, password, phoneno } = req.body;
+  if (!username || !email || !password || !phoneno) {
+    return res.status(400).json({ message: 'Fields cannot be empty' });
+  }
+
   try {
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
@@ -49,7 +54,9 @@ const registerUser = async (req, res) => {
 
     await pool.query('INSERT INTO users (user_id, username, email, password, phoneno) VALUES ($1, $2, $3, $4, $5)', [userId, username, email, hashedPassword, phoneno]);
     
-    await sendEmail(email, username);
+    const emailSubject = 'Successful Registration';
+    const emailBody = '<p>Hello {username},</p><p>You have successfully registered in Fly the Nest.</p>';
+    await sendEmail(email, username, emailSubject, emailBody);
 
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
@@ -61,6 +68,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
+    logger.info('User login', { Logging_User: req.body.email });
     const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (user.rows.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -222,6 +230,63 @@ const verifyUser = async (req, res) => {
   }
 };
 
+const bulkRegisterUsers = async (req, res) => {
+  const users = req.body.users;
+
+  if (!Array.isArray(users) || users.length === 0) {
+    return res.status(400).json({ message: 'Users data is required' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Get current year
+    const year = new Date().getFullYear().toString().slice(-2);
+
+    for (let i = 0; i < users.length; i++) {
+      const { username, email, phoneno, batch } = users[i];
+      const password = "FTN@50";
+
+      if (!username || !email || !phoneno || !batch) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'All fields are required for each user' });
+      }
+
+      const existingUser = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (existingUser.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: `User with email ${email} already exists` });
+      }
+
+      const idResult = await client.query('SELECT COUNT(*) FROM users');
+      const idCount = parseInt(idResult.rows[0].count) + 1;
+      const paddedId = idCount.toString().padStart(2, '0');
+      const userId = `${year}FTN${paddedId}`;
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await client.query(
+        'INSERT INTO users (user_id, username, email, password, phoneno, batch_id, subscription) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [userId, username, email, hashedPassword, phoneno, batch, 'active']
+      );
+
+      // await sendEmail(email, username);
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'All users registered successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in bulk registration:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  } finally {
+    client.release();
+  }
+};
+
+
 module.exports = {
   getAllUsers,
   registerUser,
@@ -230,4 +295,7 @@ module.exports = {
   updateUser,
   getInactiveUsers,
   verifyUser,
+  bulkRegisterUsers,
 };
+
+

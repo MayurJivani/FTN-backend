@@ -1,12 +1,12 @@
 const transporter = require('./transporter');
 
-const sendEmail = async (to, username) => {
+const sendEmail = async (to, username, subject, htmlBody) => {
   try {
     await transporter.sendMail({
       from: process.env.MAIL_USER,
       to: to,
-      subject: `Successful Registraion`,
-      html: `<p>Hello ${username},</p><p>You have successfully registered in Fly the Nest.</p>`,
+      subject: subject,
+      html: htmlBody.replace('{username}', username),
     });
     console.log('Email sent successfully');
   } catch (error) {
