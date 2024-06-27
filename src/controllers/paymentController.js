@@ -91,6 +91,10 @@ const getPaymentSchedule = async (req, res) => {
 // Endpoint to add payment schedule
 const addPaymentSchedule = async (req, res) => {
     const { userId, totalInstallments, startDate, Total_Amt } = req.body;
+
+    if (req.user.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
   
     try {
         const paymentSchedule = await paymentScheduleModel.addPaymentSchedule(userId, totalInstallments, startDate, Total_Amt);
@@ -107,6 +111,10 @@ const addPaymentSchedule = async (req, res) => {
 // Endpoint to add payment
 const addPayment = async (req, res) => {
     const { userId, amount, paymentDate } = req.body;
+
+    if (req.user.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
   
     try {
         const payment = await paymentScheduleModel.addPayment(userId, amount, paymentDate);
@@ -118,6 +126,11 @@ const addPayment = async (req, res) => {
 };
 
 const getAllUserPaymentSchedule = async (req, res) => {
+
+    if (req.user.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
   try {
     const schedules = await paymentScheduleModel.getAllUserPaymentSchedules();
 
@@ -142,6 +155,11 @@ const getAllUserPaymentSchedule = async (req, res) => {
 
 
 const getToSchedule = async (req, res) => {
+    
+    if (req.user.role !== "admin") {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
     try {
       const response = await paymentScheduleModel.ListUnscheduled();
   
