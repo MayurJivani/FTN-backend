@@ -49,11 +49,13 @@ const getPaymentSchedule = async (req, res) => {
             return res.status(404).json({ error: 'Payment schedule not found for the user' });
         }
 
-        const { total_installments, start_date } = schedule;
+        const { total_installments, start_date, total_amt } = schedule;
+        const emiAmount = total_amt / total_installments;
 
         const payments = await paymentScheduleModel.getPaymentsByUserId(userId);
         const totalPaymentsMade = payments.length;
         const totalInstallmentsLeft = total_installments - totalPaymentsMade;
+        const totalAmountLeft = totalInstallmentsLeft * emiAmount;
 
         if (totalPaymentsMade === 0) {
             return res.status(404).json({ error: 'No payments found for the user' });
@@ -66,11 +68,17 @@ const getPaymentSchedule = async (req, res) => {
 
         res.json({
             start_date: new Date(start_date).toDateString(),
+            total_installments,
             previous_payment: previousPaymentDate ? previousPaymentDate.toDateString() : null,
             next_payment: nextPaymentDate.toDateString(),
             final_payment: finalPaymentDate.toDateString(),
-            all_payments: payments.map(payment => payment.payment_date.toDateString()),
-            payments_left: totalInstallmentsLeft
+            all_payments: payments.map(payment => ({
+                payment_date: new Date(payment.payment_date).toDateString(),
+                amount: payment.amount
+            })),
+            payments_left: totalInstallmentsLeft,
+            total_amount_left: totalAmountLeft.toFixed(2),
+            emi_amount: emiAmount.toFixed(2) // Adding EMI amount to the response
         });
     } catch (error) {
         console.error('Error retrieving payment schedule:', error);
@@ -78,12 +86,14 @@ const getPaymentSchedule = async (req, res) => {
     }
 };
 
+
+
 // Endpoint to add payment schedule
 const addPaymentSchedule = async (req, res) => {
-    const { userId, totalInstallments, startDate } = req.body;
+    const { userId, totalInstallments, startDate, Total_Amt } = req.body;
   
     try {
-        const paymentSchedule = await paymentScheduleModel.addPaymentSchedule(userId, totalInstallments, startDate);
+        const paymentSchedule = await paymentScheduleModel.addPaymentSchedule(userId, totalInstallments, startDate, Total_Amt);
 
         await paymentScheduleModel.updateUserSubscriptionToActive(userId);
         
@@ -114,6 +124,7 @@ const getAllUserPaymentSchedule = async (req, res) => {
     const formattedSchedules = schedules.map(schedule => ({
       userId: schedule.user_id,
       username: schedule.username,
+      batch_id: schedule.batch_id,
       totalInstallments: schedule.total_installments,
       startDate: new Date(schedule.start_date).toDateString(),
       payments: schedule.payments.map(payment => ({
@@ -130,9 +141,21 @@ const getAllUserPaymentSchedule = async (req, res) => {
 };
 
 
+const getToSchedule = async (req, res) => {
+    try {
+      const response = await paymentScheduleModel.ListUnscheduled();
+  
+      res.json(response);
+    } catch (error) {
+      console.error('Error retrieving all user tobe schedule:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
 module.exports = {
     getPaymentSchedule,
     addPaymentSchedule,
     addPayment,
     getAllUserPaymentSchedule,
+    getToSchedule,
 };
