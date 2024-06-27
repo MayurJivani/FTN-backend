@@ -19,10 +19,6 @@ const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    if (user.rows[0].subscription !== 'active') {
-      return res.status(403).json({ message: 'Please purchase course to access or Contact authorities' });
-    }
-
     //console.log(typeof appId);
 
     // const zegoToken = generateToken04(
