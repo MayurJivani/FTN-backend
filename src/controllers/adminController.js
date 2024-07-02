@@ -19,21 +19,12 @@ const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    //console.log(typeof appId);
-
-    // const zegoToken = generateToken04(
-    //   appId, 
-    //   user.rows[0].user_id, 
-    //   secret, 
-    //   86400, 
-    // );
 
     const payload = {
       id: user.rows[0].id,
       email: user.rows[0].email,
       username: user.rows[0].username,
       role: "admin",
-      //zegoToken: zegoToken,
     };    
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });

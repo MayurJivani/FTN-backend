@@ -15,7 +15,7 @@ exports.addMentor = async (req, res) => {
         name, email, phoneno, profile_pic, forte, hashedPassword
       });
   
-      res.status(201).json(newMentor);
+      res.status(201).json({ message: 'Mentor added successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
