@@ -59,8 +59,65 @@ const downloadFile = async (req, res) => {
   }
 };
 
+const prePreplistFiles = async (req, res) => {
+  const directoryPath = path.join(__dirname, '../documents');
+
+  try {
+    const files = await recursiveRead(directoryPath);
+
+    res.json({ files });
+  } catch (error) {
+    console.error('Error listing files:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Helper function to recursively read directories
+const recursiveRead = async (dir) => {
+  let files = {};
+
+  const dirents = await fs.promises.readdir(dir, { withFileTypes: true });
+
+  await Promise.all(dirents.map(async (dirent) => {
+    const resPath = path.resolve(dir, dirent.name);
+
+    if (dirent.isDirectory()) {
+      files[dirent.name] = await recursiveRead(resPath);
+    } else {
+      files[dirent.name] = resPath;
+    }
+  }));
+
+  return files;
+};
+
+const prePrepdownloadFile = async (req, res) => {
+  const directory = req.query.directory;
+  const fileName = req.query.fileName;
+
+  if (!directory || !fileName) {
+    return res.status(400).json({ error: 'Directory and fileName query parameters are required' });
+  }
+
+  const filePath = path.join(__dirname, '../documents', directory, fileName);
+
+  try {
+    if (fs.existsSync(filePath)) {
+      res.download(filePath);
+    } else {
+      res.status(404).json({ error: 'File not found' });
+    }
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
 module.exports = {
     fileUpload,
     listFiles,
     downloadFile,
+    prePreplistFiles,
+    prePrepdownloadFile,
   };
