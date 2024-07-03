@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
 require('dotenv').config();
 const pool = require('../config/database');
+const { generateToken04 } = require('../models/zegoTokenGenerator'); 
 
 exports.addMentor = async (req, res) => {
     try {
@@ -45,12 +46,12 @@ exports.addMentor = async (req, res) => {
     
       //console.log(typeof appId);
   
-      // const zegoToken = generateToken04(
-      //   appId, 
-      //   user.rows[0].user_id, 
-      //   secret, 
-      //   86400, 
-      // );
+      const zegoToken = generateToken04(
+        appId, 
+        user.rows[0].name, 
+        secret, 
+        86400, 
+      );
   
       const payload = {
         id: user.rows[0].id,
