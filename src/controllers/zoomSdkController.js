@@ -51,17 +51,6 @@ const generateZoomApiJWT = () => {
   return token;
 };
 
-const generateZoomApiTk = async(req, res) => {
-  const payload = {
-    iss: VIDEO_SDK_API_KEY,
-    iat: Math.floor(Date.now() / 1000),  
-    exp: Math.floor(Date.now() / 1000) + 43200, 
-  };
-
-  const token = jwt.sign(payload, VIDEO_SDK_API_SECRET, { algorithm: 'HS256' });
-  res.status(200).json(token);
-};
-
 const fetchRecordings = async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(401).json({ error: "Unauthorized" });
@@ -263,7 +252,6 @@ module.exports = {
   generateSessionJWT,
   fetchRecordings,
   generateZoomApiJWT,
-  generateZoomApiTk,
   uploadRecording,
   eventsWebhook,
 };
