@@ -1,33 +1,28 @@
 const paymentScheduleModel = require('../models/paymentModel');
 
 const calculateNextPaymentDate = (startDate, totalInstallmentsLeft, lastPaymentDate) => {
-    // Create a new date object based on the start date
+    
     let nextPaymentDate = new Date(startDate);
 
-    // If there are no previous payments, return the start date as the next payment date
     if (!lastPaymentDate) {
         return nextPaymentDate;
     }
 
-    // Calculate the difference in months between the start date and the last payment date
     const monthsDiff = (lastPaymentDate.getFullYear() - nextPaymentDate.getFullYear()) * 12 +
         lastPaymentDate.getMonth() - nextPaymentDate.getMonth();
 
-    // Increment the next payment date by the number of months left in the installment schedule
     nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsDiff + 1);
 
     return nextPaymentDate;
 };
 
 
-// Function to calculate the final payment date
 const calculateFinalPaymentDate = (nextPaymentDate, totalInstallmentsLeft) => {
     const finalPaymentDate = new Date(nextPaymentDate);
     finalPaymentDate.setMonth(finalPaymentDate.getMonth() + totalInstallmentsLeft - 1);
     return finalPaymentDate;
 };
 
-// Function to find the previous payment date
 const findPreviousPayment = (payments, finalPaymentDate) => {
     let previousPaymentDate = null;
     for (let i = payments.length - 1; i >= 0; i--) {
@@ -39,7 +34,6 @@ const findPreviousPayment = (payments, finalPaymentDate) => {
     return previousPaymentDate;
 };
 
-// Endpoint to get payment schedule
 const getPaymentSchedule = async (req, res) => {
     const userId = req.user.id;
 
@@ -78,7 +72,7 @@ const getPaymentSchedule = async (req, res) => {
             })),
             payments_left: totalInstallmentsLeft,
             total_amount_left: totalAmountLeft.toFixed(2),
-            emi_amount: emiAmount.toFixed(2) // Adding EMI amount to the response
+            emi_amount: emiAmount.toFixed(2) 
         });
     } catch (error) {
         console.error('Error retrieving payment schedule:', error);
@@ -86,9 +80,6 @@ const getPaymentSchedule = async (req, res) => {
     }
 };
 
-
-
-// Endpoint to add payment schedule
 const addPaymentSchedule = async (req, res) => {
     const { userId, totalInstallments, startDate, Total_Amt } = req.body;
 
@@ -108,7 +99,7 @@ const addPaymentSchedule = async (req, res) => {
     }
 };
 
-// Endpoint to add payment
+
 const addPayment = async (req, res) => {
     const { userId, amount, paymentDate } = req.body;
 

@@ -2,7 +2,7 @@ const batchModel = require('../models/batchModel');
 
 const getBatches = async (req, res) => {
   try {
-    if (req.user.role !== "mentor") {
+    if (req.user.role !== "mentor" && req.user.role !== "admin") {
         return res.status(401).json({ error: "Unauthorized" });
     }
     const batches = await batchModel.getAllBatches();

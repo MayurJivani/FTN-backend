@@ -1,14 +1,14 @@
 const bcrypt = require('bcrypt');
 const pool = require('../config/database');
 const jwt = require('jsonwebtoken');
-const { generateToken04 } = require('../models/zegoTokenGenerator'); 
+//const { generateToken04 } = require('../models/zegoTokenGenerator'); 
 require('dotenv').config();
 const sendEmail = require('../utils/sendEmail');
 const { logger } = require('../utils/logger');
 const crypto = require('crypto');
 
-const appId = parseInt(process.env.ZEGO_APP_ID, 10);
-const secret = process.env.ZEGO_WEB_SECRET;
+// const appId = parseInt(process.env.ZEGO_APP_ID, 10);
+// const secret = process.env.ZEGO_WEB_SECRET;
 
 const getAllUsers = async (req, res) => {
   try {
@@ -86,12 +86,12 @@ const loginUser = async (req, res) => {
 
     //console.log(typeof appId);
 
-    const zegoToken = generateToken04(
-      appId, 
-      user.rows[0].user_id, 
-      secret, 
-      86400, 
-    );
+    // const zegoToken = generateToken04(
+    //   appId, 
+    //   user.rows[0].user_id, 
+    //   secret, 
+    //   86400, 
+    // );
 
     const payload = {
       id: user.rows[0].user_id,
@@ -104,8 +104,8 @@ const loginUser = async (req, res) => {
 
     const profilePic = user.rows[0].profile_pic ? user.rows[0].profile_pic: null;
 
-
-    res.json({ username: user.rows[0].username, token, profilePic, zegoToken: zegoToken, userId: user.rows[0].user_id });
+    res.json({ username: user.rows[0].username, token, profilePic });
+    //res.json({ username: user.rows[0].username, token, profilePic, zegoToken: zegoToken, userId: user.rows[0].user_id });
 
   } catch (error) {
     console.error('Error logging in:', error);

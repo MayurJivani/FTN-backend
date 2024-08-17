@@ -6,7 +6,9 @@ const insertLeaveApplication = async (userId, username, leaveType, approver, sta
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
         RETURNING *;
     `;
-    const values = [userId, username, leaveType, approver, startDate, endDate, reason, batchId, email];
+    const start_date_utc = new Date(startDate).toISOString();
+    const end_date_utc = new Date(endDate).toISOString();
+    const values = [userId, username, leaveType, approver, start_date_utc, end_date_utc, reason, batchId, email];
     const result = await pool.query(query, values);
     return result.rows[0];
 };
@@ -24,14 +26,14 @@ const getLeavesByApprover = async (approverId) => {
     return result.rows;
 };
 
-const updateLeaveStatus = async (userId, status) => {
+const updateLeaveStatus = async (leaveId, status) => {
     const query = `
         UPDATE leaves
         SET status = $1
-        WHERE user_id = $2
+        WHERE id = $2
         RETURNING *;
     `;
-    const values = [status, userId];
+    const values = [status, leaveId];
     const result = await pool.query(query, values);
     return result.rows[0];
 };
