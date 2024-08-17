@@ -48,18 +48,18 @@ const listLeavesByBatch = async (req, res) => {
 
 const approveOrDenyLeave = async (req, res) => {
 
-    const { user_id, status } = req.body;
+    const { leaveId, status } = req.body;
 
     if (req.user.role !== "mentor") {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (!user_id || !status || !['approved', 'denied'].includes(status)) {
-        return res.status(400).json({ message: 'Valid user_id and status (approved or denied) are required' });
+    if (!leaveId || !status || !['approved', 'denied'].includes(status)) {
+        return res.status(400).json({ message: 'Valid leaveId and status (approved or denied) are required' });
     }
 
     try {
-        const leaveApplication = await leaveModel.updateLeaveStatus(user_id, status);
+        const leaveApplication = await leaveModel.updateLeaveStatus(leaveId, status);
 
         const { username, leave_type, start_date, end_date, reason, email } = leaveApplication;
         

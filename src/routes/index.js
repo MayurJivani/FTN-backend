@@ -10,6 +10,8 @@ const mentorRoutes = require('./mentorRoute');
 const fileRoutes = require('./filesRoute');
 const lecturesRoutes = require('./lecturesRoute');
 const batchRoutes = require('./batchRoute');
+const adminRoutes = require('./adminRoute');
+const attendanceRoutes = require('./attendanceRoute');
 
 const router = express.Router();
 
@@ -24,5 +26,7 @@ router.use('/leave', leaveRoutes);
 router.use('/mentor', mentorRoutes);
 router.use('/files', fileRoutes);
 router.use('/batch', batchRoutes);
+router.use('/admin', adminRoutes)
+router.use('/attendance', attendanceRoutes)
 
 module.exports = router;

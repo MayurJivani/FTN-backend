@@ -17,27 +17,48 @@ const ZoomModel = {
     }
   },
 
-  async controlRecording(sessionId, token, method) {
-    const encodedSessionId = encodeURIComponent(sessionId);
-    console.log(encodedSessionId)
-    const url = `https://api.zoom.us/v2/videosdk/sessions/${encodedSessionId}/events`;
+  async getRecordings(token, fromDate, toDate) {
+    const url = 'https://api.zoom.us/v2/videosdk/recordings';
     const headers = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     };
-    const body = {
-      method: method === 'start' ? 'recording.start' : 'recording.stop'
+    const params = {};
+
+    if (fromDate && toDate) {
+      params.from = fromDate;
+      params.to = toDate;
+    }
+
+    try {
+      const response = await axios.get(url, {
+        headers,
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching recordings:', error.response ? error.response.data : error.message);
+      throw error;
+    }
+  },
+
+  async getSessionRecordings(sessionId, token) {
+    const encodedSessionId = encodeURIComponent(encodeURIComponent(sessionId));
+    const url = `https://api.zoom.us/v2/videosdk/sessions/${encodedSessionId}/recordings`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
     };
 
     try {
-      const response = await axios.patch(url, body, { headers });
+      const response = await axios.get(url, { headers });
       return response.data;
     } catch (error) {
-      console.error(`Error ${method === 'start' ? 'starting' : 'stopping'} recording:`, error.response ? error.response.data : error.message);
+      console.error('Error fetching session recordings:', error.response ? error.response.data : error.message);
       throw error;
     }
   }
-  
+
 };
 
 module.exports = ZoomModel;

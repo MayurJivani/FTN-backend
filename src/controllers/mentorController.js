@@ -3,6 +3,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
 require('dotenv').config();
 const pool = require('../config/database');
+//const { generateToken04 } = require('../models/zegoTokenGenerator'); 
+
+// const appId = parseInt(process.env.ZEGO_APP_ID, 10);
+// const secret = process.env.ZEGO_WEB_SECRET;
 
 exports.addMentor = async (req, res) => {
     try {
@@ -15,7 +19,7 @@ exports.addMentor = async (req, res) => {
         name, email, phoneno, profile_pic, forte, hashedPassword
       });
   
-      res.status(201).json(newMentor);
+      res.status(201).json({ message: 'Mentor added successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -47,7 +51,7 @@ exports.addMentor = async (req, res) => {
   
       // const zegoToken = generateToken04(
       //   appId, 
-      //   user.rows[0].user_id, 
+      //   user.rows[0].name, 
       //   secret, 
       //   86400, 
       // );
@@ -57,15 +61,14 @@ exports.addMentor = async (req, res) => {
         email: user.rows[0].email,
         username: user.rows[0].name,
         role: "mentor",
-        //zegoToken: zegoToken,
       };    
   
       const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
   
       const profilePic = user.rows[0].profile_pic ? user.rows[0].profile_pic: null;
   
-  
       res.json({ username: user.rows[0].name, token, profilePic });
+      // res.json({ username: user.rows[0].name, token, profilePic, zegoToken: zegoToken });
   
     } catch (error) {
       console.error('Error logging in:', error);

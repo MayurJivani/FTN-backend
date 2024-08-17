@@ -1,13 +1,14 @@
 const bcrypt = require('bcrypt');
 const pool = require('../config/database');
 const jwt = require('jsonwebtoken');
-const { generateToken04 } = require('../models/zegoTokenGenerator'); 
+//const { generateToken04 } = require('../models/zegoTokenGenerator'); 
 require('dotenv').config();
 const sendEmail = require('../utils/sendEmail');
 const { logger } = require('../utils/logger');
+const crypto = require('crypto');
 
-const appId = parseInt(process.env.ZEGO_APP_ID, 10);
-const secret = process.env.ZEGO_WEB_SECRET;
+// const appId = parseInt(process.env.ZEGO_APP_ID, 10);
+// const secret = process.env.ZEGO_WEB_SECRET;
 
 const getAllUsers = async (req, res) => {
   try {
@@ -97,15 +98,14 @@ const loginUser = async (req, res) => {
       email: user.rows[0].email,
       username: user.rows[0].username,
       batch_id: user.rows[0].batch_id,
-      //zegoToken: zegoToken,
     };    
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     const profilePic = user.rows[0].profile_pic ? user.rows[0].profile_pic: null;
 
-
     res.json({ username: user.rows[0].username, token, profilePic });
+    //res.json({ username: user.rows[0].username, token, profilePic, zegoToken: zegoToken, userId: user.rows[0].user_id });
 
   } catch (error) {
     console.error('Error logging in:', error);
@@ -287,6 +287,99 @@ const bulkRegisterUsers = async (req, res) => {
 };
 
 
+const generateOTP = () => {
+  return Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
+};
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const otp = generateOTP();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const otpExpiry = new Date(Date.now() + 15 * 60000); // OTP valid for 15 minutes
+
+    await pool.query('UPDATE users SET otp = $1, otp_expiry = $2 WHERE email = $3', [otpHash, otpExpiry, email]);
+
+    const emailSubject = 'Password Reset OTP';
+    const emailBody = `<p>Hello,</p><p>Your OTP for password reset is: <strong>${otp}</strong>. It is valid for 15 minutes.</p>`;
+    await sendEmail(email, userResult.rows[0].username, emailSubject, emailBody);
+
+    res.status(200).json({ message: 'OTP sent to email' });
+  } catch (error) {
+    console.error('Error in forgot password:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+const resendOTP = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const otp = generateOTP();
+    const otpExpiry = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
+
+    await pool.query('UPDATE users SET otp = $1, otp_expiry = $2 WHERE email = $3', [otp, otpExpiry, email]);
+
+    const emailSubject = 'Resend OTP for Password Reset';
+    const emailBody = `<p>Your new OTP for password reset is: ${otp}</p>`;
+    await sendEmail(email, userResult.rows[0].username, emailSubject, emailBody);
+
+    res.status(200).json({ message: 'OTP resent successfully' });
+  } catch (error) {
+    console.error('Error in resending OTP:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+const updatePassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ message: 'Email, OTP, and new password are required' });
+  }
+
+  try {
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+    const isOtpValid = await bcrypt.compare(otp, user.otp);
+
+    if (!isOtpValid || Date.now() > user.otp_expiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = $1, otp = NULL, otp_expiry = NULL WHERE email = $2', [hashedPassword, email]);
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+
 module.exports = {
   getAllUsers,
   registerUser,
@@ -296,6 +389,9 @@ module.exports = {
   getInactiveUsers,
   verifyUser,
   bulkRegisterUsers,
+  forgotPassword,
+  resendOTP,
+  updatePassword,
 };
 
 

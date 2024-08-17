@@ -7,5 +7,6 @@ router.get('/payment_schedule',auth, paymentScheduleController.getPaymentSchedul
 router.post('/payment_schedule', paymentScheduleController.addPaymentSchedule);
 router.post('/payments', paymentScheduleController.addPayment);
 router.get('/all_payment_schedules', auth, paymentScheduleController.getAllUserPaymentSchedule);
+router.get('/to_schedule',auth, paymentScheduleController.getToSchedule);
 
 module.exports = router;
