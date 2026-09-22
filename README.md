@@ -7,6 +7,7 @@
 [![Stars](https://img.shields.io/github/stars/MayurJivani/FTN-backend?style=flat-square)](https://github.com/MayurJivani/FTN-backend/stargazers)
 [![Issues](https://img.shields.io/github/issues/MayurJivani/FTN-backend?style=flat-square)](https://github.com/MayurJivani/FTN-backend/issues)
 ![Code size](https://img.shields.io/github/languages/code-size/MayurJivani/FTN-backend?style=flat-square)
+![uptime](https://img.shields.io/badge/uptime-when%20the%20nest%20is%20flown-16a085?style=flat-square)
 
 The API behind Fly The Nest. Express on Postgres, with JWT auth, bcrypt
 password hashing, S3-backed media uploads via multer, transactional mail
